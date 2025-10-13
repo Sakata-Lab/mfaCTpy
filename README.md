@@ -20,7 +20,7 @@
 
 This package provides a complete workflow for registering microCT-scanned mouse brain images to the Allen Common Coordinate Framework (CCF). The workflow enables:
 
-- **Automated fiber tracking** for implanted optical fibers
+- **Manual fiber tracking** for implanted optical fibers
 - **Brain region identification** using Allen CCF annotations
 - **3D visualization** of fiber locations in anatomical context
 
@@ -108,7 +108,7 @@ The Allen CCF atlas (25 μm resolution) will be automatically downloaded:
 6. 3D Visualization & Reports
 ```
 
-**Total time**: 2-4 hours (depending on number of landmarks/fibers)
+**Total time**: 1-2 hours (depending on number of landmarks/fibers)
 
 ---
 
@@ -578,5 +578,6 @@ For questions or issues:
   - Movie generation
 
 ---
+
 
 **Good luck with your analysis!**
