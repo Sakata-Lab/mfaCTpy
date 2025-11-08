@@ -1,4 +1,4 @@
-# uCT2CCF: MicroCT Mouse Brain Registration to Allen CCF
+# mfaCTpy: Multifiber array mapping and registration from microCT sans in Python
 
 ## User Guide v1.0
 
@@ -581,3 +581,4 @@ For questions or issues:
 
 
 **Good luck with your analysis!**
+
