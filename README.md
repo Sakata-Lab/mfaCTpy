@@ -582,13 +582,8 @@ SimpleITK and Allen CCF use **(x, y, z)** convention:
 If you use this package in your research, please cite:
 
 ```
-Allen Institute for Brain Science (2011). Allen Mouse Brain Atlas.
-Available from: http://mouse.brain-map.org/
-
-Wang et al. (2020). The Allen Mouse Brain Common Coordinate Framework:
-A 3D Reference Atlas. Cell, 181(4), 936-953.
-```
-
+Sakata, S. mfaCTpy: Python-based package for multi-fiber array tracing based on microCT images
+https://github.com/Sakata-Lab/mfaCTpy
 ---
 
 ## Version History
@@ -619,4 +614,3 @@ For questions or issues:
 
 ---
 
-**Good luck with your analysis!**
