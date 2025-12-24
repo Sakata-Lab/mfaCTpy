@@ -1116,6 +1116,7 @@ def main():
     registered_image = PROJECT_PATH / "data" / "processed" / "microct_registered.tif"
     transform_file = PROJECT_PATH / "data" / "processed" / "transform_landmark.tfm"
     ccf_annotation = PROJECT_PATH / "data" / "ccf" / "annotation_25.nrrd"
+    # ccf_annotation = PROJECT_PATH / "data" / "ccf" / "average_template_25.nrrd"
     ontology_file = PROJECT_PATH / "data" / "ccf" / "structure_tree.json"
     output_dir = PROJECT_PATH / "outputs"
     
