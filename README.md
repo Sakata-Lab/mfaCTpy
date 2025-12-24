@@ -584,6 +584,7 @@ If you use this package in your research, please cite:
 ```
 Sakata, S. mfaCTpy: Python-based package for multi-fiber array tracing based on microCT images
 https://github.com/Sakata-Lab/mfaCTpy
+```
 ---
 
 ## Version History
