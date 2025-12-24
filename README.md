@@ -1,6 +1,6 @@
-# mfaCTpy: Multifiber array mapping and registration from microCT scans in Python
+# mfaCTpy: MicroCT Mouse Brain Registration to Allen CCF
 
-## User Guide v1.0
+## User Guide v1.1
 
 ---
 
@@ -9,28 +9,34 @@
 1. [Overview](#overview)
 2. [Installation](#installation)
 3. [Data Structure](#data-structure)
-4. [Workflow Overview](#workflow-overview)
-5. [Step-by-Step Instructions](#step-by-step-instructions)
-6. [Troubleshooting](#troubleshooting)
-7. [Tips for Best Results](#tips-for-best-results)
+4. [Module Reference](#module-reference)
+5. [Workflow Overview](#workflow-overview)
+6. [Step-by-Step Instructions](#step-by-step-instructions)
+7. [Troubleshooting](#troubleshooting)
+8. [Tips for Best Results](#tips-for-best-results)
 
 ---
 
 ## Overview
 
-This package provides a complete workflow for registering microCT-scanned mouse brain images to the Allen Common Coordinate Framework (CCF). The workflow enables:
-
-- **Manual fiber tracking** for implanted optical fibers
-- **Brain region identification** using Allen CCF annotations
-- **3D visualization** of fiber locations in anatomical context
+**mfaCTpy** is a Python package for registering microCT-scanned mouse brain images to the Allen Common Coordinate Framework (CCF). It provides a complete workflow for processing microCT data with implanted optical fibers, enabling automated fiber tracking and brain region identification.
 
 ### Key Features
 
+- DICOM to TIFF conversion for microCT volumes
 - Interactive midline alignment with axis verification
-- Landmark-based registration with optional intensity-based refinement
-- Manual fiber tracking with automatic region identification
-- 3D visualization with slice planes
+- Landmark-based registration to Allen CCF with optional intensity-based refinement
+- Manual fiber tracking with automatic brain region identification
+- Interactive 3D visualization of fiber locations
 - Movie generation for presentations
+- Allen CCF annotation viewer with structure lookup
+
+### Use Cases
+
+- Identifying brain regions where optical fibers are implanted
+- Registering microCT mouse brain scans to a standard atlas
+- Visualizing fiber placement in anatomical context
+- Creating presentation materials from 3D brain volumes
 
 ---
 
@@ -44,37 +50,40 @@ This package provides a complete workflow for registering microCT-scanned mouse 
 ### Required Python Packages
 
 ```bash
-pip install numpy tifffile matplotlib scipy SimpleITK pandas nrrd requests
+pip install numpy tifffile matplotlib scipy SimpleITK pandas nrrd requests pydicom tqdm opencv-python bg-atlasapi
 ```
 
 ### Optional Packages
 
-For 3D visualization:
+For additional functionality:
 ```bash
-pip install mpl_toolkits
-```
-
-### Project Structure
-
-Create the following folder structure:
-
-```
-C:\DATA\MFA\uCT\uCT2CCF\
-├── data\
-│   ├── raw\                    # Place DICOM files here
-│   ├── processed\              # Processed images
-│   └── ccf\                    # Allen CCF data
-├── outputs\                    # Analysis results
-└── src\                        # Python scripts
+pip install scikit-image pillow
 ```
 
 ---
 
 ## Data Structure
 
+### Recommended Project Structure
+
+```
+C:\DATA\MFA\uCT\uCT2CCF\
+├── data\
+│   ├── *.tif                    # Original microCT scan (3D TIFF)
+│   ├── processed\
+│   │   ├── microct_aligned.tif  # Midline-aligned image
+│   │   └── microct_registered.tif # CCF-registered image
+│   └── ccf\                     # Allen CCF data
+│       ├── annotation_25.nrrd   # Brain region annotations
+│       ├── average_template_25.nrrd # Reference template
+│       └── structure_tree.json  # Region hierarchy
+├── outputs\                     # Analysis results
+└── src\                         # Python scripts
+```
+
 ### Input Data
 
-- **MicroCT DICOM files**: Raw scanner output
+- **MicroCT DICOM files**: Raw scanner output (folder of .dcm files)
 - **OR pre-converted .tif**: 3D TIFF stack
 
 ### Expected Image Properties
@@ -82,33 +91,57 @@ C:\DATA\MFA\uCT\uCT2CCF\
 - **Resolution**: ~20 μm isotropic (typical for microCT)
 - **Content**: Mouse head with skull, brain, and implanted fibers
 - **Fiber diameter**: 50 μm (appears as 2-3 pixels at 20 μm resolution)
+- **Fiber appearance**: Bright thin white lines; tiny white dots in horizontal slices
 
 ### Allen CCF Data
 
-The Allen CCF atlas (25 μm resolution) will be automatically downloaded:
-- **Annotation volume**: Brain region labels
-- **Template volume**: MRI-like reference image
-- **Ontology JSON**: Region hierarchy and names
+Allen CCF files can be downloaded automatically or manually:
+- **Annotation volume** (annotation_25.nrrd): Brain region labels
+- **Template volume** (average_template_25.nrrd): MRI-like reference image
+- **Structure tree** (structure_tree.json): Region hierarchy and names
+
+Download URL: http://download.alleninstitute.org/informatics-archive/current-release/mouse_ccf/
+
+---
+
+## Module Reference
+
+| Module | Purpose | Key Features |
+|--------|---------|--------------|
+| `dicom_loader.py` | DICOM to TIFF conversion | GUI file selection, 16-bit output |
+| `data_loader.py` | Load microCT and CCF data | Uses BrainGlobe API, visualization |
+| `preprocessing.py` | Image preprocessing | Resampling, normalization, denoising (experimental) |
+| `midline_alignment.py` | Align brain midline | Interactive marking, axis verification |
+| `landmark_registration.py` | Register to CCF | Landmark selection, affine transform, refinement |
+| `fiber_tracker.py` | Track optical fibers | Manual tracking, CCF region lookup |
+| `fiber_visualizer_3d.py` | 3D visualization | Interactive 3D view, slice planes |
+| `movie_creator.py` | Create MP4 movies | GUI-based, multiple axes |
+| `annotation_loader.py` | View CCF annotations | Interactive browser, structure colors |
+| `registered_img_visualization.py` | Registration overlay | CCF overlay visualization |
 
 ---
 
 ## Workflow Overview
 
 ```
-1. DICOM → TIFF Conversion
+1. DICOM → TIFF Conversion (dicom_loader.py)
    ↓
-2. Midline Alignment (Interactive)
+2. Load Data (data_loader.py)
    ↓
-3. Axis Verification (Optional)
+3. Midline Alignment (midline_alignment.py)
    ↓
-4. Landmark Registration (Interactive)
+4. Axis Verification (midline_alignment.py)
    ↓
-5. Fiber Tracking (Interactive)
+5. Landmark Registration (landmark_registration.py)
    ↓
-6. 3D Visualization & Reports
+6. Fiber Tracking (fiber_tracker.py)
+   ↓
+7. 3D Visualization (fiber_visualizer_3d.py)
+   ↓
+8. Create Movies / Reports (movie_creator.py, registered_img_visualization.py)
 ```
 
-**Total time**: 1-2 hours (depending on number of landmarks/fibers)
+**Estimated Total Time**: 2-4 hours (depending on number of landmarks/fibers)
 
 ---
 
@@ -118,329 +151,334 @@ The Allen CCF atlas (25 μm resolution) will be automatically downloaded:
 
 **Script**: `dicom_loader.py`
 
-**Purpose**: Convert DICOM series to a single 3D TIFF file
+**Purpose**: Convert DICOM series from microCT scanner to a single 3D TIFF file.
 
-**Instructions**:
+**Usage**:
+```bash
+python dicom_loader.py
+```
 
-1. Run the script:
-   ```bash
-   python dicom_loader.py
-   ```
+**Process**:
+1. GUI dialog opens to select folder containing DICOM files
+2. Select output location for TIFF file
+3. Script loads all slices, normalizes to 16-bit, and saves
 
-2. When prompted, select the folder containing DICOM files
+**Functions**:
+- `load_dicom_volume(dicom_folder, normalize=True)`: Load DICOM series into numpy array
+- `save_volume_as_tif(volume, output_path, bit_depth=16)`: Save as multi-page TIFF
 
-3. Choose save location for output TIFF
-
-4. The script will:
-   - Load all DICOM slices
-   - Combine into 3D volume
-   - Normalize to 16-bit
-   - Save as multi-page TIFF
-
-**Output**: `microct_original.tif` in `data/` folder
+**Output**: `*.tif` (3D TIFF stack)
 
 **Time**: 2-5 minutes
 
 ---
 
-### Step 2: Midline Alignment
+### Step 2: Load and Inspect Data
+
+**Script**: `data_loader.py`
+
+**Purpose**: Load microCT .tif files and Allen CCF atlas for inspection.
+
+**Usage**:
+```python
+from data_loader import DataLoader
+
+loader = DataLoader(PROJECT_PATH)
+microct = loader.load_microct()           # Auto-detects first .tif
+atlas = loader.load_allen_ccf(resolution=25)  # Downloads if needed
+loader.get_info()                          # Print summary
+loader.visualize_slices()                  # Show comparison
+```
+
+**Key Features**:
+- Uses BrainGlobe API for atlas download
+- Supports 10, 25, or 50 μm CCF resolution
+- Generates overview visualization
+
+**Output**: Loaded numpy arrays, visualization in `outputs/01_data_overview.png`
+
+---
+
+### Step 3: Midline Alignment
 
 **Script**: `midline_alignment.py`
 
-**Purpose**: Align brain to midline and correct orientation
+**Purpose**: Align the brain midline to image center and correct orientation.
 
-#### 2a. View Selection
+**Usage**:
+```bash
+python midline_alignment.py
+```
 
-When you run the script, you'll first see three orthogonal views of your data. Click on the view that shows horizontal (top-down) brain sections - this is typically the best view for marking the brain midline.
+**Interactive Steps**:
 
-#### 2b. Mark Midline Points
+1. **View Selection**: Three orthogonal views are shown; script uses horizontal view for midline marking
 
-**Instructions**:
+2. **Mark Midline Points**:
+   - LEFT-CLICK to mark points along brain midline
+   - Navigate slices using slider
+   - Mark 2-3 points per slice across 5-10 slices
+   - Use "Clear Slice" or "Clear All" to redo
 
-1. **Navigate slices**: Use the slider or mouse wheel
+3. **Apply Alignment**: 
+   - Script fits a plane to marked points
+   - Calculates and applies rotation
+   - Full resolution processing takes 5-30 minutes
 
-2. **Mark points**: LEFT-CLICK along the brain midline
-   - Mark 2-3 points per slice
-   - Use 5-10 slices spanning the brain
-   - Points should follow the sagittal midline
+4. **Axis Verification** (optional but recommended):
+   - Interactive interface to verify coronal/axial/sagittal orientations
+   - Swap or flip axes if needed
+   - Save corrected image
 
-3. **Switch views** (if needed): Use view buttons to mark in multiple planes
-
-4. **Verify coverage**: Ensure points span anterior-posterior extent
-
-5. **Clear if needed**:
-   - "Clear Slice": Remove points from current slice
-   - "Clear All": Start over
-
-6. **Finish**: Click "Done" when satisfied
-
-#### 2c. Apply Alignment
-
-The script will:
-- Fit a plane to your midline points
-- Calculate rotation needed to align midline vertically
-- Apply rotation at full resolution (**takes 5-30 minutes**)
-- Show before/after visualization
-
-**Check the result**: The green dashed line should align with the brain midline in the visualization.
-
-#### 2d. Axis Verification (Recommended)
-
-After alignment, you can verify that axes are correctly labeled. The expected orientation should show the brain from front/back in coronal view, from top in axial view (with midline vertical), and from the side in sagittal view.
-
-If views don't match:
-- Use **Swap** buttons to exchange axes
-- Use **Flip** buttons to mirror along an axis
-
-**Output**: `microct_aligned.tif` (and optionally `microct_aligned_corrected.tif`)
+**Output**:
+- `microct_aligned.tif` or `microct_aligned_corrected.tif`
+- `midline_points.json` (saved landmark points)
+- `00_midline_alignment_fullres.png` (visualization)
 
 **Time**: 15-30 minutes (marking) + 5-30 minutes (processing)
 
 ---
 
-### Step 3: Landmark Registration
+### Step 4: Landmark Registration
 
 **Script**: `landmark_registration.py`
 
-**Purpose**: Register aligned microCT to Allen CCF atlas
+**Purpose**: Register aligned microCT image to Allen CCF atlas using manual landmarks.
 
-#### 3a. Landmark Selection
+**Usage**:
+```bash
+python landmark_registration.py
+```
 
-**Good landmarks for mouse brain**:
-- **Bregma**: Intersection of coronal and sagittal sutures
-- **Lambda**: Posterior end of sagittal suture
-- **Brain tips**: Anterior, posterior, ventral
-- **Brain edges**: Left and right at widest point
-- **Ventricle corners** (if visible)
-- **Olfactory bulb tips**
+**Interactive Landmark Selection**:
 
-**Instructions**:
+1. **Interface**: Side-by-side display of microCT (MOVING) and CCF (FIXED)
 
-1. **Click on MOVING image** (microCT) first
-2. **Navigate** to find the landmark clearly
-3. **Click corresponding point** on FIXED image (Allen CCF)
-4. **Switch views** (Z/Y/X buttons) to find landmarks in different planes
-5. **Select 6-12 landmark pairs** (minimum 6, more is better)
+2. **Marking Landmarks**:
+   - Click on microCT image first, then corresponding CCF location
+   - Use Z/Y/X buttons to switch viewing planes
+   - Navigate slices with slider or scroll wheel
+   - Need minimum 4 pairs (6-12 recommended)
 
-**Tips**:
-- Use multiple anatomical views to increase accuracy
-- Distribute landmarks throughout the brain volume
-- Prioritize clear, unambiguous features
-- Check the landmark list occasionally ("List All" button)
+3. **Good Landmarks**:
+   - Bregma (skull suture intersection)
+   - Lambda (posterior suture)
+   - Brain tips (anterior, posterior, ventral)
+   - Ventricle corners
+   - Olfactory bulb tips
 
-#### 3b. Registration
+4. **Registration**:
+   - Computes affine transformation
+   - Reports mean/max landmark error
+   - Option for intensity-based refinement (recommended)
 
-The script will:
-- Compute affine transformation from landmarks
-- Apply transformation to align images
-- Show registration quality metrics
-- Generate visualization
+**Quality Metrics**:
+- Mean error < 0.5 mm: Excellent
+- Mean error < 1.0 mm: Good
+- Max error < 2.0 mm: Acceptable
 
-**Quality metrics**:
-- **Mean error**: < 0.5 mm is excellent, < 1.0 mm is good
-- **Max error**: < 2.0 mm is acceptable
-
-#### 3c. Optional Refinement
-
-You'll be asked: "Refine registration with intensity-based optimization?"
-
-- **Yes**: Improves alignment using image intensities (recommended, takes 10-20 min)
-- **No**: Use landmark-based result only
-
-**Output**: 
+**Output**:
 - `microct_registered.tif`: Registered image
-- `transform_landmark.tfm`: Transform file
-- `registration_metrics.json`: Quality metrics
-- Visualization images
+- `transform_landmark.tfm`: SimpleITK transform file
+- `registration_metrics.json`: Error metrics
+- `landmarks.json`: Saved landmark pairs
+- Visualization images in `outputs/`
 
-**Time**: 30-60 minutes (landmark selection) + 5-20 minutes (computation)
+**Time**: 30-60 minutes (landmarks) + 5-20 minutes (computation)
 
 ---
 
-### Step 4: Fiber Tracking
+### Step 5: Fiber Tracking
 
 **Script**: `fiber_tracker.py`
 
-**Purpose**: Track optical fibers and identify brain regions
+**Purpose**: Manually track optical fibers and identify brain regions using CCF.
 
-#### 4a. Setup
+**Usage**:
+```bash
+python fiber_tracker.py
+```
 
-The script will check for required files and ask whether you want to use the registered image (recommended) or aligned image with transform. Using the registered image provides direct coordinate mapping and is simpler and more accurate.
+**Setup**:
+1. Script checks for registered image (preferred) or aligned image + transform
+2. Downloads CCF annotation if needed
+3. Loads Allen CCF ontology for region names
 
-The script will also check for Allen CCF annotation and download if needed.
+**Tracking Interface**:
 
-#### 4b. Previous Work
+1. **Mark Fiber Entry Point**: Click at brain surface where fiber enters
+2. **Mark Fiber Tip**: Navigate to tip location and click
+3. **Save Fiber**: Adds to fiber list with automatic region identification
+4. **Repeat**: Track all visible fibers
 
-If previous tracking work is found, you can choose to continue (load previous fibers and add more), replace (start fresh), or quit.
+**Controls**:
+- Slider/scroll: Navigate slices
+- "New Fiber": Start tracking new fiber
+- "Save Fiber": Complete current fiber
+- "Undo": Remove last point
+- "Save Progress": Save all tracked fibers
+- "Export": Generate reports
 
-#### 4c. Track Fibers
-
-**Instructions**:
-
-1. **Navigate** to fiber entry point at brain surface
-
-2. **Click** to mark **FIBER TOP** (entry point)
-
-3. **Navigate** to fiber tip deep in brain
-
-4. **Click** to mark **FIBER BOTTOM** (tip)
-
-5. The script automatically identifies the brain region at the fiber tip
-
-6. **Click "Next Fiber"** to save and start the next fiber
-
-7. **Repeat** for all fibers
-
-**Shortcuts**:
-- `u`: Undo current point
-- `Shift+U`: Undo last saved fiber
-- `n`: Next fiber (save current)
-- `s`: Save progress
-- `Enter`: Finish
-
-**Region identification**:
-The script displays region name, acronym, CCF coordinates, and hierarchical path for each fiber tip.
-
-#### 4d. Review Outputs
-
-**Generated files**:
-- `fiber_data.json`: Complete fiber information
+**Output**:
+- `fiber_data.json`: Complete fiber coordinates and regions
 - `fiber_report.csv`: Spreadsheet-compatible data
 - `fiber_summary.txt`: Human-readable summary
-- `fiber_horizontal_view.png`: Coronal overview
-- `fiber_ccf_overlay.png`: Fibers on CCF annotation
-
-**Output**: Complete fiber tracking data in `outputs/` folder
+- `fiber_horizontal_view.png`: Overview visualization
+- `fiber_ccf_overlay.png`: CCF overlay
 
 **Time**: 5-10 minutes per fiber
 
 ---
 
-### Step 5: 3D Visualization
+### Step 6: 3D Visualization
 
 **Script**: `fiber_visualizer_3d.py`
 
-**Purpose**: Interactive 3D visualization of tracked fibers
+**Purpose**: Interactive 3D visualization of tracked fibers in anatomical context.
+
+**Usage**:
+```bash
+python fiber_visualizer_3d.py
+```
+
+**Requirements**: Requires `fiber_data.json` from fiber tracking step.
 
 **Features**:
-- Rotate 3D view with mouse
-- Zoom with mouse wheel
+- 3D view with mouse rotation
 - Toggle slice planes (coronal, sagittal, axial)
 - Show/hide individual fibers
-- Switch between microCT and Allen CCF
-- Preset camera angles
+- Switch between microCT and CCF reference
+- Preset camera views (Top, Side, Front, 3D)
+- Zoom controls
 
-**Instructions**:
-
-1. Run the script:
-   ```bash
-   python fiber_visualizer_3d.py
-   ```
-
-2. **Interact**:
-   - **Drag**: Rotate view
-   - **Scroll**: Zoom in/out
-   - **Sliders**: Navigate slice positions
-   - **Checkboxes**: Toggle fiber visibility
-   - **Buttons**: Change views, reset zoom
-
-**Time**: Interactive (no time limit)
+**Controls**:
+- Drag: Rotate view
+- Scroll: Zoom
+- Sliders: Navigate slice positions
+- Checkboxes: Toggle fiber visibility
+- Buttons: Change views, reset zoom
 
 ---
 
-### Step 6: Create Movies (Optional)
+### Step 7: Create Movies
 
 **Script**: `movie_creator.py`
 
-**Purpose**: Generate movies showing brain slices for presentations
+**Purpose**: Generate MP4 movies from 3D volumes for presentations.
 
-**Instructions**:
+**Usage**:
+```bash
+python movie_creator.py
+```
 
-1. Run the script:
-   ```bash
-   python movie_creator.py
-   ```
+**GUI Features**:
+- Visual preview of all three axes
+- Select which axes to export
+- Name each axis (coronal, sagittal, axial)
+- Set frame rate (default: 20 fps)
+- Compression quality control
+- Optional vertical/horizontal flip
 
-2. Select input TIFF file
-
-3. In the GUI:
-   - Select axis/axes for movies
-   - Name each axis (e.g., "coronal", "sagittal")
-   - Set frame rate (default: 20 fps)
-   - Choose compression quality
-   - Optionally flip orientation
-
-4. Click "Create Movies"
-
-**Output**: MP4 movies showing slices through selected axes
+**Output**: MP4 movie files (e.g., `microct_registered_coronal_movie.mp4`)
 
 **Time**: 2-5 minutes per movie
 
 ---
 
+### Step 8: View Registration Overlay
+
+**Script**: `registered_img_visualization.py`
+
+**Purpose**: Create overlay visualizations of registered microCT with CCF annotations.
+
+**Usage**:
+```bash
+python registered_img_visualization.py
+```
+
+**Process**:
+1. Select registered .tif file
+2. Select CCF folder with annotation and structure tree
+3. Choose extraction plane (coronal, horizontal, sagittal)
+4. Script creates colored CCF overlays for all slices
+
+**Output**:
+- Individual slice images with overlay
+- Montage of representative sections
+- Saved in `outputs/coronal_overlay_sections/`
+
+---
+
+### Utility: CCF Annotation Viewer
+
+**Script**: `annotation_loader.py`
+
+**Purpose**: Interactive browser for Allen CCF annotations.
+
+**Usage**:
+```bash
+python annotation_loader.py
+```
+
+**Features**:
+- Navigate through annotation volume
+- Switch between coronal/sagittal/axial views
+- Color by structure ID or anatomical colors
+- Hover for structure name and ID
+- Zoom, pan, and rotate controls
+- Mouse wheel slice navigation
+
+---
+
 ## Troubleshooting
 
-### Issue: Midline alignment looks wrong
-
-**Symptoms**: Green line doesn't align with midline after rotation
+### Midline alignment looks wrong
 
 **Solutions**:
-1. Check if you marked enough points (need 2-3 points on 5-10 slices)
-2. Ensure points truly follow the midline (not off-center)
-3. Try marking in a different view (axial vs coronal)
-4. If rotation is in the wrong direction, set `reverse=True` in the `apply_alignment()` call
+1. Mark more points (2-3 per slice on 5-10 slices)
+2. Ensure points follow true anatomical midline
+3. Try marking in different view (axial vs coronal)
+4. Use `reverse=True` in `apply_alignment()` if rotation is backwards
 
-### Issue: Axes appear swapped after alignment
-
-**Symptoms**: Coronal view shows top-down, or other axis confusion
+### Axes appear swapped after alignment
 
 **Solutions**:
-1. Use the axis verification step and swap axes as needed using the Swap buttons
-2. Save the corrected image for subsequent steps
-3. Document which swaps you used for reproducibility
+1. Use axis verification step
+2. Swap axes using interactive buttons
+3. Save corrected image before registration
 
-### Issue: Registration error is high (> 1 mm)
-
-**Symptoms**: Mean landmark error > 1.0 mm
+### Registration error is high (> 1 mm)
 
 **Solutions**:
-1. Review landmark pairs - look for outliers in the error list
-2. Remove problematic landmarks and re-run
-3. Add more landmarks in poorly-aligned regions
-4. Ensure landmarks are clear anatomical features visible in both images
-5. Try intensity-based refinement
+1. Review landmarks - remove outliers
+2. Add more landmarks in poorly-aligned regions
+3. Use clear, unambiguous anatomical features
+4. Try intensity-based refinement
+5. Ensure landmarks are visible in both images
 
-### Issue: Fiber regions identified incorrectly
-
-**Symptoms**: Region name doesn't match expected anatomy
+### Fiber regions identified incorrectly
 
 **Solutions**:
-1. Check if you're using the registered image (recommended) vs aligned image with transform
-2. Verify CCF annotation loaded correctly
-3. Check registration quality - poor registration → wrong regions
-4. Verify fiber tip is actually at the intended location
-5. Review the CCF coordinates printed during tracking
+1. Verify using registered image (not aligned + transform)
+2. Check CCF annotation loaded correctly
+3. Verify registration quality first
+4. Confirm fiber tip marked at actual location
 
-### Issue: Scripts run very slowly
-
-**Symptoms**: Processing takes much longer than expected times
+### Scripts run very slowly
 
 **Solutions**:
-1. Check available RAM (need ~8-16 GB for typical datasets)
+1. Check available RAM (8-16 GB recommended)
 2. Close other applications
-3. For midline alignment, full resolution processing is slow (5-30 min is normal)
-4. Consider using a machine with more CPU cores
+3. Full resolution alignment is expected to be slow (5-30 min)
+4. Consider using machine with more CPU cores
 
-### Issue: Allen CCF download fails
-
-**Symptoms**: Cannot download annotation or template
+### Allen CCF download fails
 
 **Solutions**:
 1. Check internet connection
-2. Try manual download from Allen Institute:
-   - URL: http://download.alleninstitute.org/informatics-archive/current-release/mouse_ccf/
+2. Manual download from: http://download.alleninstitute.org/informatics-archive/current-release/mouse_ccf/
 3. Place files in `data/ccf/` folder
-4. File names: `annotation_25.nrrd`, `average_template_25.nrrd`, `structure_tree.json`
+4. Required files: `annotation_25.nrrd`, `average_template_25.nrrd`, `structure_tree.json`
 
 ---
 
@@ -448,42 +486,34 @@ The script displays region name, acronym, CCF coordinates, and hierarchical path
 
 ### Imaging Tips
 
-1. **Scan at highest resolution possible** (20 μm or better)
-2. **Include clear skull landmarks** (bregma, lambda) if visible
-3. **Ensure good contrast** between brain tissue and background
-4. **Center the brain** in the scan volume
+1. Scan at highest resolution possible (20 μm or better)
+2. Include clear skull landmarks (bregma, lambda) if visible
+3. Ensure good contrast between brain tissue and background
+4. Center the brain in the scan volume
 
 ### Midline Alignment Tips
 
-1. **Mark points carefully** - accuracy here affects all downstream analyses
-2. **Use multiple slices** spanning anterior-posterior extent
-3. **Verify alignment** before proceeding to registration
-4. **Save midline points** so you can reload if needed
+1. Mark points carefully - accuracy affects all downstream steps
+2. Use multiple slices spanning anterior-posterior extent
+3. Verify alignment before proceeding to registration
+4. Always run axis verification step
 
 ### Registration Tips
 
-1. **Select 8-12 landmarks** for best results (minimum 6)
-2. **Distribute landmarks** throughout the volume (don't cluster)
-3. **Use clear, unambiguous features** that are visible in both images
-4. **Check different anatomical planes** to find best landmark views
-5. **Always use intensity-based refinement** for best accuracy
+1. Select 8-12 landmarks for best results (minimum 4-6)
+2. Distribute landmarks throughout the volume (don't cluster)
+3. Use clear, unambiguous features visible in both images
+4. Check different anatomical planes to find best landmark views
+5. Always use intensity-based refinement for best accuracy
 
 ### Fiber Tracking Tips
 
-1. Fibers appear as bright thin white lines in the microCT images. Since fibers are penetrated from the surface to deep brain structures, they appear as tiny white dots in horizontal slices.
-2. **Navigate through multiple slices** to confirm fiber path
-3. **Mark entry point** at brain surface (not in skull)
-4. **Mark tip accurately** - small errors change region identification
-5. **Save progress frequently** using the "Save Progress" button
-6. **Use Undo** liberally if you make a mistake
-
-### Visualization Tips
-
-1. **Start with 3D view** to get overall orientation
-2. **Toggle slice planes** to understand fiber locations in context
-3. **Hide fibers individually** to reduce visual clutter
-4. **Use preset views** (Top/Side/Front) for standard orientations
-5. **Export views** by taking screenshots for presentations
+1. Fibers appear as bright thin lines (dots in horizontal slices)
+2. Navigate through multiple slices to confirm fiber path
+3. Mark entry point at brain surface (not in skull)
+4. Mark tip accurately - small errors change region ID
+5. Save progress frequently
+6. Use Undo liberally for mistakes
 
 ---
 
@@ -501,21 +531,25 @@ The script displays region name, acronym, CCF coordinates, and hierarchical path
 | File | Format | Description |
 |------|--------|-------------|
 | `microct_aligned.tif` | `.tif` | Midline-aligned image |
+| `microct_aligned_corrected.tif` | `.tif` | Axis-corrected aligned image |
 | `microct_registered.tif` | `.tif` | CCF-registered image |
 | `transform_landmark.tfm` | `.tfm` | SimpleITK transform |
+| `transform_refined.tfm` | `.tfm` | Refined registration transform |
 | `landmarks.json` | `.json` | Registration landmarks |
 | `midline_points.json` | `.json` | Midline alignment points |
+| `registration_metrics.json` | `.json` | Registration quality metrics |
 
 ### Output Files
 
 | File | Format | Description |
 |------|--------|-------------|
-| `fiber_data.json` | `.json` | Complete fiber data |
-| `fiber_report.csv` | `.csv` | Spreadsheet-compatible |
-| `fiber_summary.txt` | `.txt` | Human-readable report |
-| `fiber_horizontal_view.png` | `.png` | Coronal overview |
+| `fiber_data.json` | `.json` | Complete fiber data with coordinates |
+| `fiber_report.csv` | `.csv` | Spreadsheet-compatible fiber data |
+| `fiber_summary.txt` | `.txt` | Human-readable fiber summary |
+| `fiber_horizontal_view.png` | `.png` | Fiber overview visualization |
 | `fiber_ccf_overlay.png` | `.png` | CCF overlay visualization |
 | `*_movie.mp4` | `.mp4` | Slice movies |
+| `coronal_overlay_*.png` | `.png` | Registration overlay images |
 
 ---
 
@@ -524,7 +558,7 @@ The script displays region name, acronym, CCF coordinates, and hierarchical path
 ### Image Array Convention
 
 All 3D arrays use **(Z, Y, X)** convention:
-- **Z**: Dorsal-Ventral (top-bottom)
+- **Z**: Dorsal-Ventral (top-bottom) / Coronal slice index
 - **Y**: Anterior-Posterior (front-back)
 - **X**: Medial-Lateral (left-right)
 
@@ -538,7 +572,7 @@ SimpleITK and Allen CCF use **(x, y, z)** convention:
 ### Slice Views
 
 - **Coronal**: Slicing through Z, viewing Y-X plane (front/back view)
-- **Axial**: Slicing through Y, viewing Z-X plane (top/down view)
+- **Axial/Horizontal**: Slicing through Y, viewing Z-X plane (top-down view)
 - **Sagittal**: Slicing through X, viewing Z-Y plane (side view)
 
 ---
@@ -557,17 +591,12 @@ A 3D Reference Atlas. Cell, 181(4), 936-953.
 
 ---
 
-## Support
-
-For questions or issues:
-1. Check the [Troubleshooting](#troubleshooting) section
-2. Review the [Tips for Best Results](#tips-for-best-results)
-3. Verify all file paths are correct in your scripts
-4. Check that all dependencies are installed
-
----
-
 ## Version History
+
+- **v1.1** (2025): Updated documentation
+  - Accurate module descriptions
+  - Complete workflow documentation
+  - Improved troubleshooting section
 
 - **v1.0** (2025): Initial release
   - DICOM to TIFF conversion
@@ -576,10 +605,18 @@ For questions or issues:
   - Fiber tracking with CCF integration
   - 3D visualization
   - Movie generation
+  - CCF annotation viewer
 
 ---
 
+## Support
+
+For questions or issues:
+1. Check the [Troubleshooting](#troubleshooting) section
+2. Review the [Tips for Best Results](#tips-for-best-results)
+3. Verify all file paths are correct
+4. Check that all dependencies are installed
+
+---
 
 **Good luck with your analysis!**
-
-
