@@ -582,6 +582,10 @@ SimpleITK and Allen CCF use **(x, y, z)** convention:
 If you use this package in your research, please cite:
 
 ```
+Multi-fiber array-based photometry system for multi-regional functional mapping in the mouse brain
+Manil Bradai, Mirna Merkler, Gabriela Gil, Rebecca Davie, Shuzo Sakata
+bioRxiv 2025.12.23.696162; doi: https://doi.org/10.64898/2025.12.23.696162
+
 Sakata, S. mfaCTpy: Python-based package for multi-fiber array tracing based on microCT images
 https://github.com/Sakata-Lab/mfaCTpy
 ```
